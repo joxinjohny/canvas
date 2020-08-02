@@ -1,104 +1,94 @@
 var canvas = document.querySelector('canvas');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 
 var c = canvas.getContext('2d');
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-c.beginPath();
-c.moveTo(0, canvas.height / 2);
-
-for(let i = 0; i < canvas.width; i++) {
-    c.lineTo(i, canvas.height / 2 + Math.sin(i * 0.01) * 100);
+var mouse = {
+    x: undefined,
+    y: undefined
 }
 
-c.stroke();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* 
-
-const colors = [
-    '#01579B',
-    '#40C4FF',
-    '#00B0FF',
-    '#0091EA'
+var colorArray = [
+    '#05F2C7',
+    '#038C4C',
+    '#014023',
+    '#F29B30',
+    '#A64B29'
 ];
 
-const mouse = {
-    x: innerWidth / 2,
-    y: innerHeight / 2
-};
+var zoomRadius = 50;
+var maxRadius = 30;
 
+window.addEventListener('mousemove', function(event) {
+    mouse.x = event.x;
+    mouse.y = event.y;
+});
 
-function Particle(x, y, radius, color) {
+function Circle(x, y, dx, dy, radius) {
     this.x = x;
     this.y = y;
+    this.dx = dx;
+    this.dy = dy;
     this.radius = radius;
-    this.color = color;
-    this.radians = Math.random() * Math.PI * 2;
-    this.velocity = 0.03;
-    this.distanceFromCenter = randomFromRange(50, 120);
-    this.lastMouse = {x: x, y: y};
+    this.minRadius = radius;
+    this.color = colorArray[Math.floor(Math.random() * colorArray.length)];
 
-    this.draw = lastPoint => {
+    this.draw = function() {
         c.beginPath();
-        c.strokeStyle = this.color;
-        c.lineWidth = this.radius;
-        c.moveTo(lastPoint.x, lastPoint.y);
-        c.lineTo(this.x, this.y);
-        c.stroke();
-        c.closePath();
+        c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        c.fillStyle = this.color;
+        c.fill();
     }
 
-    this.update = function(e) {
-        const lastPoint = {x: this.x, y:this.y};
+    this.update = function() {
+        if(this.x + this.radius > innerWidth || this.x - this.radius < 0){
+            this.dx = -this.dx;
+        }
+        if(this.y + this.radius > innerHeight || this.y - this.radius < 0){
+            this.dy = -this.dy;
+        }
+        this.x += this.dx;
+        this.y += this.dy;
 
-        //Move points over time
-        this.radians  += this.velocity;
-
-        // Drag Effect
-        this.lastMouse.x += (mouse.x - this.lastMouse.x) * 0.05;
-        this.lastMouse.y += (mouse.y - this.lastMouse.y) * 0.05;
-
-        this.x = this.lastMouse.x + Math.cos(this.radians) * this.distanceFromCenter;
-        this.y = this.lastMouse.y + Math.sin(this.radians) * this.distanceFromCenter;
-        this.draw(lastPoint);
+        //Interaction
+        if(mouse.x - this.x < zoomRadius && mouse.x - this.x > -zoomRadius && mouse.y - this.y < zoomRadius && mouse.y - this.y > -zoomRadius) {
+            if(this.radius < maxRadius) {
+                this.radius += 1;
+            }                            
+        } else if(this.radius > this.minRadius){
+            this.radius -= 1;
+        }
+        this.draw();
     }
 }
 
-let particles = [];
+c.fillStyle = 'rgba(' + Math.random() * Math.floor(255) + ', ' + Math.random() * Math.floor(255) + ', ' + Math.random() * Math.floor(255) + ', 0.3)';
+
+var circleArray = [];
 
 function init() {
-    particles = [];
-    
-    for( var i = 0; i < 100; i++) {
-        const radius = (Math.random() * 2) + 1
-        particles.push(new Particle(canvas.width / 2, canvas.height / 2, radius, randomColor(colors)));
+    circleArray = [];
+    for( var i = 0; i < 1000; i++) {
+        var radius = Math.random() * 5 + 1;
+        var x = Math.random() * (innerWidth - radius * 2) + radius;
+        var y = Math.random() * (innerHeight - radius * 2) + radius;
+        var dx = (Math.random() - 0.5) * 1;
+        var dy = (Math.random() - 0.5) * 1;
+        circleArray.push(new Circle(x, y, dx, dy, radius));
     }
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    c.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    //c.clearRect(0, 0, innerWidth, innerHeight);
+    
+    c.fillStyle = 'rgba(255, 255, 255, 1)';
     c.fillRect(0, 0, innerWidth, innerHeight);
-
-    particles.forEach(particle => {
-        particle.update();
-    });
+   
+    for( var i = 0; i < circleArray.length; i++) {
+        circleArray[i].update();
+    }
 
 }
 
@@ -106,28 +96,8 @@ init();
 animate();
 
 
-
-//Utility Functions
-
-function randomFromRange(min, max) {
-    return Math.floor(Math.random() * (max - min + 1) + min);
-}
-
-function randomColor(colors) {
-    return colors[Math.floor(Math.random() * colors.length)];
-}
-
-
-
-// Event Listners
-
 addEventListener('resize', () => {
     canvas.width = innerWidth;
     canvas.height = innerHeight;
     init();
 });
-
-addEventListener('mousemove', event => {
-    mouse.x = event.clientX;
-    mouse.y = event.clientY;
-}); */
